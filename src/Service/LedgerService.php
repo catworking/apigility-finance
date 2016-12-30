@@ -54,8 +54,22 @@ class LedgerService
 
         // TODO: 计算余额
         $top_ledger = $this->getTopLedger($user);
-        if (empty($top_ledger)) $ledger->setBalance((double)$data->amount);
-        else $ledger->setBalance((double)$data->amount+(double)$top_ledger->getBalance());
+
+        switch ($data->amount_type) {
+            case DoctrineEntity\Ledger::AMOUNT_TYPE_DEBIT:
+                if (empty($top_ledger)) $ledger->setBalance((double)$data->amount);
+                else $ledger->setBalance((double)$data->amount+(double)$top_ledger->getBalance());
+                break;
+
+            case DoctrineEntity\Ledger::AMOUNT_TYPE_CREDIT:
+                if (empty($top_ledger)) $ledger->setBalance((double)$data->amount-((double)$data->amount*2));
+                else $ledger->setBalance((double)$data->amount-(double)$top_ledger->getBalance());
+                break;
+
+            default:
+                throw new \Exception('未知的发生额类型', 500);
+
+        }
 
         $ledger->setCreateTime(new \DateTime());
         $ledger->setUser($user);
