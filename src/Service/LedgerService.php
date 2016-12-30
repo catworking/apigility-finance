@@ -62,8 +62,8 @@ class LedgerService
                 break;
 
             case DoctrineEntity\Ledger::AMOUNT_TYPE_CREDIT:
-                if (empty($top_ledger)) $ledger->setBalance((double)$data->amount-((double)$data->amount*2));
-                else $ledger->setBalance((double)$data->amount-(double)$top_ledger->getBalance());
+                if (empty($top_ledger)) $ledger->setBalance(-(double)$data->amount);
+                else $ledger->setBalance((double)$top_ledger->getBalance()-(double)$data->amount);
                 break;
 
             default:
