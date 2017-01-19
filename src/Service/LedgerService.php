@@ -39,8 +39,10 @@ class LedgerService
 
     public function createLedger($data)
     {
-        if (isset($data->user_id)) $user = $this->userService->getUser($data->user_id);
-        else throw new \Exception('没用指定数据所属用户', 500);
+        $user = null;
+        if (isset($data->user_id)) {
+            $user = $this->userService->getUser($data->user_id);
+        }
 
         $ledger = new DoctrineEntity\Ledger();
         if (isset($data->account)) $ledger->setAccount($data->account);
@@ -72,7 +74,8 @@ class LedgerService
         }
 
         $ledger->setCreateTime(new \DateTime());
-        $ledger->setUser($user);
+
+        if ($user instanceof User) $ledger->setUser($user);
 
         $this->em->persist($ledger);
         $this->em->flush();
@@ -97,12 +100,15 @@ class LedgerService
      * @param string $account
      * @return \ApigilityFinance\DoctrineEntity\Ledger
      */
-    public function getTopLedger(User $user, $account = 'default')
+    public function getTopLedger($user = null, $account = 'default')
     {
-        $params = new \stdClass();
-        $params->account = $account;
-        $params->user_id = $user->getId();
-        $rs = $this->getLedgers($params);
+        $user_id = null;
+        if ($user instanceof User) $user_id = $user->getId();
+
+        $rs = $this->getLedgers((object)[
+            'user_id'=> $user_id,
+            'account' => $account
+        ]);
         if ($rs->count() > 0) {
             return $rs->getItems(0,1)[0];
         } else return null;
@@ -120,15 +126,18 @@ class LedgerService
         }
 
         if (isset($params->user_id)) {
-            $qb->innerJoin('l.user', 'user');
             if (!empty($where)) $where .= ' AND ';
-            $where .= 'user.id = :user_id';
+            if (empty($params->user_id)) $where .= 'l.user IS NULL';
+            else {
+                $qb->innerJoin('l.user', 'user');
+                $where .= 'user.id = :user_id';
+            }
         }
 
         if (!empty($where)) {
             $qb->where($where);
             if (isset($params->account)) $qb->setParameter('account', $params->account);
-            if (isset($params->user_id)) $qb->setParameter('user_id', $params->user_id);
+            if (isset($params->user_id) && !empty($params->user_id)) $qb->setParameter('user_id', $params->user_id);
         }
 
         $doctrine_paginator = new DoctrineToolPaginator($qb->getQuery());

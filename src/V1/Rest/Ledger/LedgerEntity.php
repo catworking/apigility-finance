@@ -71,7 +71,7 @@ class LedgerEntity extends ApigilityObjectStorageAwareEntity
         return $this->id;
     }
 
-    public function setUser(User $user)
+    public function setUser($user)
     {
         $this->user = $user;
         return $this;
