@@ -55,7 +55,7 @@ class LedgerService
         else throw new \Exception('没有输入发生额类型', 500);
 
         // TODO: 计算余额
-        $top_ledger = $this->getTopLedger($user);
+        $top_ledger = $this->getTopLedger($user, $ledger->getAccount());
 
         switch ($data->amount_type) {
             case DoctrineEntity\Ledger::AMOUNT_TYPE_DEBIT:
